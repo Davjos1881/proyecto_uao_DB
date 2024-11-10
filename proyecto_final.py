@@ -101,6 +101,20 @@ class Hotel:
         self.df_clientes = pd.concat([self.df_clientes, pd.DataFrame([nuevo_cliente])], ignore_index=True)
         self.guardar_datos()
 
+    def modificar_cliente(self, id_cliente, nuevo_nombre=None, nuevo_contacto=None, nueva_direccion=None):
+     index = self.df_clientes[self.df_clientes["ID_Cliente"] == id_cliente].index
+     if not index.empty:
+        if nuevo_nombre:
+            self.df_clientes.at[index[0], "Nombre"] = nuevo_nombre
+        if nuevo_contacto:
+            self.df_clientes.at[index[0], "Contacto"] = nuevo_contacto
+        if nueva_direccion:
+            self.df_clientes.at[index[0], "Direccion"] = nueva_direccion
+        self.guardar_datos()
+     else:
+        messagebox.showerror("Error", "Cliente no encontrado")
+
+
     def obtener_historial_reservas(self, id_cliente):
         historial = self.df_reservas[self.df_reservas["ID_Cliente"] == id_cliente]
         return historial
@@ -147,6 +161,18 @@ class HotelApp:
         self.entry_id_cliente = self.create_entry(self.ventana, "ID de cliente:")
         self.entry_nueva_fecha_inicio = self.create_entry(self.ventana, "Nueva fecha de inicio (YYYY-MM-DD):")
         self.entry_nueva_fecha_fin = self.create_entry(self.ventana, "Nueva fecha de fin (YYYY-MM-DD):")
+
+        self.entry_id_cliente_cliente = self.create_entry(self.ventana, "ID del cliente:")
+        self.entry_nombre_cliente = self.create_entry(self.ventana, "Nombre del cliente:")
+        self.entry_contacto_cliente = self.create_entry(self.ventana, "Contacto del cliente:")
+        self.entry_direccion_cliente = self.create_entry(self.ventana, "Dirección del cliente:")
+
+        self.button_registrar_cliente = tk.Button(self.ventana, text="Registrar Cliente", command=self.registrar_cliente)
+        self.button_registrar_cliente.pack()
+
+        self.button_modificar_cliente = tk.Button(self.ventana, text="Modificar Cliente", command=self.modificar_cliente)
+        self.button_modificar_cliente.pack()
+
 
         self.button_registrar_habitacion = tk.Button(self.ventana, text="Registrar Habitación", command=self.registrar_habitacion)
         self.button_registrar_habitacion.pack()
@@ -232,5 +258,28 @@ class HotelApp:
 
     def reporte_ocupacion(self):
         self.hotel.reporte_ocupacion()
+
+    def registrar_cliente(self):
+        try:
+            id_cliente = int(self.entry_id_cliente_cliente.get())
+            nombre = self.entry_nombre_cliente.get()
+            contacto = self.entry_contacto_cliente.get()
+            direccion = self.entry_direccion_cliente.get()
+            self.hotel.registrar_cliente(id_cliente, nombre, contacto, direccion)
+            messagebox.showinfo("Éxito", "Cliente registrado correctamente")
+        except ValueError:
+            messagebox.showerror("Error", "Por favor, ingrese valores válidos.")
+
+    def modificar_cliente(self):
+        try:
+            id_cliente = int(self.entry_id_cliente_cliente.get())
+            nuevo_nombre = self.entry_nombre_cliente.get() or None
+            nuevo_contacto = self.entry_contacto_cliente.get() or None
+            nueva_direccion = self.entry_direccion_cliente.get() or None
+            self.hotel.modificar_cliente(id_cliente, nuevo_nombre, nuevo_contacto, nueva_direccion)
+            messagebox.showinfo("Éxito", "Cliente modificado correctamente")
+        except ValueError:
+            messagebox.showerror("Error", "Por favor, ingrese valores válidos.")
+
 
 app = HotelApp()
