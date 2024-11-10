@@ -4,21 +4,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-datosh = "C:/Users/santa/Downloads/sistema_hotel.xlsx"
+datos_hotel = "C:/Users/santa/Downloads/sistema_hotel.xlsx"
 
-class Hotel:#las variables sheet_name no se cambian, es para que el programa identifique las hojas del excel
+class Hotel:
     def __init__(self):
-        self.df_habitaciones = pd.read_excel(datosh, sheet_name="Habitaciones")
-        self.df_clientes = pd.read_excel(datosh, sheet_name="Clientes")
-        self.df_reservas = pd.read_excel(datosh, sheet_name="Reservas")
-    
+        self.df_habitaciones = pd.read_excel(datos_hotel, sheet_name="Habitaciones")
+        self.df_clientes = pd.read_excel(datos_hotel, sheet_name="Clientes")
+        self.df_reservas = pd.read_excel(datos_hotel, sheet_name="Reservas")
+
     def guardar_datos(self):
-        with pd.ExcelWriter(datosh) as writer:
+        with pd.ExcelWriter(datos_hotel) as writer:
             self.df_habitaciones.to_excel(writer, sheet_name="Habitaciones", index=False)
             self.df_clientes.to_excel(writer, sheet_name="Clientes", index=False)
             self.df_reservas.to_excel(writer, sheet_name="Reservas", index=False)
-    
-    # --- Gestion Habitaciones ---
+
     def registrar_habitacion(self, numero, tipo, capacidad, precio, disponible=True):
         nueva_habitacion = {
             "ID_Habitacion": numero,
@@ -27,10 +26,9 @@ class Hotel:#las variables sheet_name no se cambian, es para que el programa ide
             "Precio_por_Noche": precio,
             "Disponible": disponible
         }
-        # DEBEMOS USAR pd.concat() en lugar de append, da error si no
         self.df_habitaciones = pd.concat([self.df_habitaciones, pd.DataFrame([nueva_habitacion])], ignore_index=True)
         self.guardar_datos()
-    
+
     def modificar_habitacion(self, numero, nuevo_precio=None, nueva_capacidad=None, nueva_disponibilidad=None):
         index = self.df_habitaciones[self.df_habitaciones["ID_Habitacion"] == numero].index
         if not index.empty:
@@ -52,11 +50,10 @@ class Hotel:#las variables sheet_name no se cambian, es para que el programa ide
             disponibles = disponibles[disponibles["Precio_por_Noche"] <= precio_max]
         return disponibles
 
-    # --- Gestion reservas ---
     def registrar_reserva(self, id_reserva, id_cliente, id_habitacion, fecha_inicio, fecha_fin):
         habitacion_disponible = self.df_habitaciones[
             (self.df_habitaciones["ID_Habitacion"] == id_habitacion) & 
-            (self.df_habitaciones["Disponible"] == True)
+            (self.df_habitaciones["Disponible"] == True) 
         ]
         if not habitacion_disponible.empty:
             nueva_reserva = {
@@ -94,7 +91,6 @@ class Hotel:#las variables sheet_name no se cambian, es para que el programa ide
         else:
             messagebox.showerror("Error", "Reserva no encontrada")
 
-    # --- Gestion de Clientes ---
     def registrar_cliente(self, id_cliente, nombre, contacto, direccion):
         nuevo_cliente = {
             "ID_Cliente": id_cliente,
@@ -109,7 +105,6 @@ class Hotel:#las variables sheet_name no se cambian, es para que el programa ide
         historial = self.df_reservas[self.df_reservas["ID_Cliente"] == id_cliente]
         return historial
 
-    # --- Reportes/estadisticas ---
     def reporte_ocupacion(self):
         ocupadas = self.df_reservas[self.df_reservas["Estado"] == "Activa"]
         fechas = ocupadas["Fecha_Inicio"]
@@ -136,14 +131,12 @@ class Hotel:#las variables sheet_name no se cambian, es para que el programa ide
         plt.ylabel("Reservas")
         plt.show()
 
-# --- Ya la interfaz---
 class HotelApp:
     def __init__(self):
         self.hotel = Hotel()
         self.ventana = tk.Tk()
         self.ventana.title("Sistema de Reservas de Hotel")
 
-        # --- Entrys modificar info ---
         self.entry_id_habitacion = self.create_entry(self.ventana, "ID de la habitación:")
         self.entry_tipo_habitacion = self.create_entry(self.ventana, "Tipo de habitación:")
         self.entry_capacidad_habitacion = self.create_entry(self.ventana, "Capacidad de la habitación:")
@@ -151,10 +144,10 @@ class HotelApp:
         self.entry_disponibilidad_habitacion = self.create_entry(self.ventana, "Disponibilidad (True/False):")
         
         self.entry_id_reserva = self.create_entry(self.ventana, "ID de reserva:")
-        self.entry_nueva_fecha_inicio = self.create_entry(self.ventana, "Nueva fecha de inicio:")
-        self.entry_nueva_fecha_fin = self.create_entry(self.ventana, "Nueva fecha de fin:")
+        self.entry_id_cliente = self.create_entry(self.ventana, "ID de cliente:")
+        self.entry_nueva_fecha_inicio = self.create_entry(self.ventana, "Nueva fecha de inicio (YYYY-MM-DD):")
+        self.entry_nueva_fecha_fin = self.create_entry(self.ventana, "Nueva fecha de fin (YYYY-MM-DD):")
 
-        # ---Botones---(pone los pack debajo en lugar de agrupados al final para saber cuales es la de cada)
         self.button_registrar_habitacion = tk.Button(self.ventana, text="Registrar Habitación", command=self.registrar_habitacion)
         self.button_registrar_habitacion.pack()
 
@@ -174,7 +167,7 @@ class HotelApp:
         self.button_reporte_ocupacion.pack()
 
         tk.mainloop()
-    #fun. para crear entrys
+
     def create_entry(self, ventana, label_text):
         label = tk.Label(ventana, text=label_text)
         label.pack()
@@ -183,45 +176,61 @@ class HotelApp:
         return entry
 
     def registrar_habitacion(self):
-        id_habitacion = int(self.entry_id_habitacion.get())
-        tipo = self.entry_tipo_habitacion.get()
-        capacidad = int(self.entry_capacidad_habitacion.get())
-        precio = float(self.entry_precio_habitacion.get())
-        disponible = bool(self.entry_disponibilidad_habitacion.get())
-        self.hotel.registrar_habitacion(id_habitacion, tipo, capacidad, precio, disponible)
-        messagebox.showinfo("Éxito", "Habitación registrada correctamente")
+        try:
+            id_habitacion = int(self.entry_id_habitacion.get())
+            tipo = self.entry_tipo_habitacion.get()
+            capacidad = int(self.entry_capacidad_habitacion.get())
+            precio = float(self.entry_precio_habitacion.get())
+            disponible = self.entry_disponibilidad_habitacion.get().strip().lower() == 'true'
+            self.hotel.registrar_habitacion(id_habitacion, tipo, capacidad, precio, disponible)
+            messagebox.showinfo("Éxito", "Habitación registrada correctamente")
+        except ValueError:
+            messagebox.showerror("Error", "Por favor, ingrese valores válidos.")
 
     def modificar_habitacion(self):
-        id_habitacion = int(self.entry_id_habitacion.get())
-        nuevo_precio = float(self.entry_precio_habitacion.get()) if self.entry_precio_habitacion.get() else None
-        nueva_capacidad = int(self.entry_capacidad_habitacion.get()) if self.entry_capacidad_habitacion.get() else None
-        nueva_disponibilidad = bool(self.entry_disponibilidad_habitacion.get()) if self.entry_disponibilidad_habitacion.get() else None
-        self.hotel.modificar_habitacion(id_habitacion, nuevo_precio, nueva_capacidad, nueva_disponibilidad)
-        messagebox.showinfo("Éxito", "Habitación modificada correctamente")
+        try:
+            id_habitacion = int(self.entry_id_habitacion.get())
+            nuevo_precio = float(self.entry_precio_habitacion.get()) if self.entry_precio_habitacion.get() else None
+            nueva_capacidad = int(self.entry_capacidad_habitacion.get()) if self.entry_capacidad_habitacion.get() else None
+            nueva_disponibilidad = self.entry_disponibilidad_habitacion.get().strip().lower() == 'true' if self.entry_disponibilidad_habitacion.get() else None
+            self.hotel.modificar_habitacion(id_habitacion, nuevo_precio, nueva_capacidad, nueva_disponibilidad)
+            messagebox.showinfo("Éxito", "Habitación modificada correctamente")
+        except ValueError:
+            messagebox.showerror("Error", "Por favor, ingrese valores válidos.")
 
     def registrar_reserva(self):
-        id_reserva = int(self.entry_id_reserva.get())
-        id_cliente = 1 
-        id_habitacion = int(self.entry_id_habitacion.get())
-        fecha_inicio = self.entry_nueva_fecha_inicio.get()
-        fecha_fin = self.entry_nueva_fecha_fin.get()
-        self.hotel.registrar_reserva(id_reserva, id_cliente, id_habitacion, fecha_inicio, fecha_fin)
-        messagebox.showinfo("Éxito", "Reserva registrada correctamente")
+        try:
+            id_reserva = int(self.entry_id_reserva.get())
+            id_cliente = int(self.entry_id_cliente.get())
+            id_habitacion = int(self.entry_id_habitacion.get())
+            fecha_inicio = self.entry_nueva_fecha_inicio.get()
+            fecha_fin = self.entry_nueva_fecha_fin.get()
+            datetime.strptime(fecha_inicio, '%Y-%m-%d')
+            datetime.strptime(fecha_fin, '%Y-%m-%d')
+            self.hotel.registrar_reserva(id_reserva, id_cliente, id_habitacion, fecha_inicio, fecha_fin)
+            messagebox.showinfo("Éxito", "Reserva registrada correctamente")
+        except ValueError:
+            messagebox.showerror("Error", "Por favor, ingrese valores válidos o verifique el formato de la fecha.")
 
     def modificar_reserva(self):
-        id_reserva = int(self.entry_id_reserva.get())
-        nueva_fecha_inicio = self.entry_nueva_fecha_inicio.get()
-        nueva_fecha_fin = self.entry_nueva_fecha_fin.get()
-        self.hotel.modificar_reserva(id_reserva, nueva_fecha_inicio, nueva_fecha_fin)
-        messagebox.showinfo("Éxito", "Reserva modificada correctamente")
+        try:
+            id_reserva = int(self.entry_id_reserva.get())
+            nueva_fecha_inicio = self.entry_nueva_fecha_inicio.get()
+            nueva_fecha_fin = self.entry_nueva_fecha_fin.get()
+            self.hotel.modificar_reserva(id_reserva, nueva_fecha_inicio, nueva_fecha_fin)
+            messagebox.showinfo("Éxito", "Reserva modificada correctamente")
+        except ValueError:
+            messagebox.showerror("Error", "Por favor, ingrese valores válidos.")
 
     def cancelar_reserva(self):
-        id_reserva = int(self.entry_id_reserva.get())
-        self.hotel.cancelar_reserva(id_reserva)
-        messagebox.showinfo("Éxito", "Reserva cancelada correctamente")
+        try:
+            id_reserva = int(self.entry_id_reserva.get())
+            self.hotel.cancelar_reserva(id_reserva)
+            messagebox.showinfo("Éxito", "Reserva cancelada correctamente")
+        except ValueError:
+            messagebox.showerror("Error", "Por favor, ingrese un ID de reserva válido.")
 
     def reporte_ocupacion(self):
         self.hotel.reporte_ocupacion()
-
 
 app = HotelApp()
