@@ -42,13 +42,15 @@ class Hotel:
         else:
             messagebox.showerror("Error", "Habitación no encontrada")
 
-    def consultar_habitaciones_disponibles(self, tipo=None, precio_max=None):
-        disponibles = self.df_habitaciones[self.df_habitaciones["Disponible"] == True]
-        if tipo:
-            disponibles = disponibles[disponibles["Tipo"] == tipo]
-        if precio_max:
-            disponibles = disponibles[disponibles["Precio_por_Noche"] <= precio_max]
-        return disponibles
+    def verificar_disponibilidad_habitacion(self, id_habitacion):
+        habitacion = self.df_habitaciones[self.df_habitaciones["ID_Habitacion"] == id_habitacion]
+        if not habitacion.empty:
+            if habitacion["Disponible"].values[0]:
+                return "La habitación está disponible."
+            else:
+                return "La habitación ya está en uso."
+        else:
+            return "Habitación no encontrada."
 
     def registrar_reserva(self, id_reserva, id_cliente, id_habitacion, fecha_inicio, fecha_fin):
         habitacion_disponible = self.df_habitaciones[
@@ -123,7 +125,6 @@ class Hotel:
         fechas = ocupadas["Fecha_Inicio"]
         ocupacion_por_fecha = fechas.value_counts().sort_index()
 
-        # Graficar ocupación por fecha
         ocupacion_por_fecha.plot(kind="bar", color="#4EAA03")
         plt.title("Ocupación por fecha")
         plt.xlabel("Fecha")
@@ -173,10 +174,10 @@ class HotelApp:
         self.frame_bajo.pack(side="bottom", padx=5)
 
     # LABELS
-        self.main_label = tk.Label(self.frame_medio,text="SISTEMA DE GESTION HOTELERA",font=('Arial',30),bg="#D0EDFC",fg="#3D0B60")
+        self.main_label = tk.Label(self.frame_medio,text="SISTEMA DE GESTION HOTELERA",font=("Arial",30),bg="#D0EDFC",fg="#3D0B60")
         self.main_label.pack(pady=30)
 
-        self.label_left = tk.Label(self.frame_izquierdo, text="HABITACONES", font=("Arial"),bg="#D0EDFC",fg="#C20000")
+        self.label_left = tk.Label(self.frame_izquierdo, text="HABITACIONES", font=("Arial"),bg="#D0EDFC",fg="#C20000")
         self.label_left.pack(pady=5)
 
         self.label_right = tk.Label(self.frame_derecho, text="CLIENTES", font=("Arial"),bg="#D0EDFC",fg="#C20000")
@@ -217,6 +218,9 @@ class HotelApp:
 
         self.button_modificar_habitacion = tk.Button(self.frame_izquierdo, text="Modificar Habitación",font=('Arial',12),command=self.modificar_habitacion,bg="#0077b6",fg="white")
         self.button_modificar_habitacion.pack(pady=5)
+
+        self.button_verificar_disponibilidad = tk.Button(self.frame_izquierdo, text="Consultar Habitacion", font=("Arial",12), command=self.verificar_disponibilidad,bg="#FFFF72",fg="black")
+        self.button_verificar_disponibilidad.pack(pady=5)
 
         self.button_registrar_reserva = tk.Button(self.frame_medio, text="Registrar Reserva",font=('Arial',12),command=self.registrar_reserva,bg="#4EAA03",fg="white")
         self.button_registrar_reserva.pack(pady=5)
@@ -269,6 +273,14 @@ class HotelApp:
         except ValueError:
             messagebox.showerror("Error", "Por favor, ingrese algun valor.")
 
+    def verificar_disponibilidad(self):
+        try:
+            id_habitacion = int(self.entry_id_habitacion.get())
+            resultado = self.hotel.verificar_disponibilidad_habitacion(id_habitacion)
+            messagebox.showinfo("Disponibilidad", resultado)
+        except ValueError:
+            messagebox.showerror("Error", "Por favor, ingrese un ID de habitación válido.")
+            
     def registrar_reserva(self):
         try:
             id_reserva = int(self.entry_id_reserva.get())
